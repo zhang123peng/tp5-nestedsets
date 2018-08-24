@@ -103,7 +103,7 @@ class NestedSets
      */
     public function getTree()
     {
-        return Db::table($this->tableName)->order("{$this->leftKey}")->select();
+        return Db::name($this->tableName)->order("{$this->leftKey}")->select();
     }
 
     /**
@@ -121,7 +121,7 @@ class NestedSets
 
         $condition[] = [$this->leftKey, $optionOne, $item[$this->leftKey]];
         $condition[] = [$this->rightKey, $optionTwo, $item[$this->rightKey]];
-        return Db::table($this->tableName)
+        return Db::name($this->tableName)
             ->where($condition)
             ->order("{$this->leftKey}")
             ->select();
@@ -144,7 +144,7 @@ class NestedSets
      */
     public function getChild($id)
     {
-        return Db::table($this->tableName)
+        return Db::name($this->tableName)
             ->where($this->parentKey, '=', $id)
             ->order("{$this->leftKey}")
             ->select();
@@ -167,7 +167,7 @@ class NestedSets
             if ($position == "top") {
                 $key = 1;
             }else{
-                $key = Db::table($this->tableName)
+                $key = Db::name($this->tableName)
                     ->max("{$this->rightKey}")+1;
             }
         }else{
@@ -179,7 +179,7 @@ class NestedSets
         //更新其他节点
         $sql = "UPDATE {$this->tableName} SET {$this->rightKey} = {$this->rightKey}+2,{$this->leftKey} = IF({$this->leftKey}>={$key},{$this->leftKey}+2,{$this->leftKey}) WHERE {$this->rightKey}>={$key}";
         try {
-            Db::table($this->tableName)
+            Db::name($this->tableName)
                 ->query($sql);
 
             $newNode[$this->parentKey] = $parentId;
@@ -188,7 +188,7 @@ class NestedSets
             $newNode[$this->levelKey] = $level;
             $tmpData = array_merge($newNode, $data);
 
-            Db::table($this->tableName)->insert($tmpData);
+            Db::name($this->tableName)->insert($tmpData);
             Db::commit();
             return true;
         }catch (Exception $e){
@@ -217,12 +217,12 @@ class NestedSets
         $condition[] = [$this->rightKey, '<=', $item[$this->rightKey]];
 
         try {
-            Db::table($this->tableName)
+            Db::name($this->tableName)
                 ->where($condition)->delete();
 
             $sql = "UPDATE {$this->tableName} SET {$this->leftKey} = IF({$this->leftKey}>{$item[$this->leftKey]}, {$this->leftKey}-{$keyWidth}, {$this->leftKey}), {$this->rightKey} = {$this->rightKey}-{$keyWidth} WHERE {$this->rightKey}>{$item[$this->rightKey]}";
             //再移动节点
-            Db::table($this->tableName)->query($sql);
+            Db::name($this->tableName)->query($sql);
 
             return true;
         }catch (Exception $e){
@@ -254,7 +254,7 @@ class NestedSets
                 $nearKey = 0;
             } else {
                 // 选择最大的右键作为开始
-                $nearKey = Db::table($this->tableName)
+                $nearKey = Db::name($this->tableName)
                     ->max("{$this->rightKey}");
             }
         }else{
@@ -361,7 +361,7 @@ class NestedSets
                     {$this->rightKey} > {$item[$this->leftKey]}
                     AND 
                     {$this->leftKey} <= {$nearKey}";
-            Db::table($this->tableName)->query($sql);
+            Db::name($this->tableName)->query($sql);
         }else{
             $treeEdit = $nearKey - $item[$this->leftKey]+1;
 
@@ -399,7 +399,7 @@ class NestedSets
 					{$this->rightKey} > {$nearKey}
 					AND
 					{$this->leftKey} < {$item[$this->rightKey]}";
-            Db::table($this->tableName)->query($sql);
+            Db::name($this->tableName)->query($sql);
         }
 
         return true;
@@ -415,7 +415,7 @@ class NestedSets
     {
         if (!isset(self::$itemCache[$id])) {
             self::$itemCache[$id] =
-                Db::table($this->tableName)
+                Db::name($this->tableName)
                 ->field([$this->leftKey, $this->rightKey, $this->parentKey, $this->levelKey])
                 ->where($this->primaryKey, '=', $id)
                 ->find();
